@@ -1,7 +1,11 @@
+/*
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+
+*/
 package main
 
-import "fmt"
+import "github.com/utouto97/remote-nvim/cmd"
 
 func main() {
-  fmt.Println("hello")
+	cmd.Execute()
 }
