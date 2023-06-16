@@ -56,8 +56,10 @@ func start(args []string) {
 	noDockerfiles := true
 	if hasFile("Dockerfile") {
 		devcontainerJSON.Build.Dockerfile = "Dockerfile"
+		noDockerfiles = false
 	} else if hasFile("docker-compose.yml") {
 		devcontainerJSON.DockerComposeFile = "docker-compose.yml"
+		noDockerfiles = false
 	}
 
 	if noDockerfiles {
