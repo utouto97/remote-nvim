@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 
   This subcommand is particularly useful when starting a new coding session or switching to a new development environment. It eliminates the manual setup process, allowing users to quickly dive into their coding tasks with Neovim.`,
 	Run: func(cmd *cobra.Command, args []string) {
-    start(args)
+		start(args)
 	},
 }
 
@@ -43,51 +43,50 @@ func init() {
 }
 
 func start(args []string) {
-  if hasFile(path.Join(".devcontainer", "devcontainer.json")) {
-    return
-  }
+	if hasFile(path.Join(".devcontainer", "devcontainer.json")) {
+		return
+	}
 
-  if err := exec.Command("mkdir", "-p", ".devcontainer").Run(); err != nil {
-    panic(err)
-  }
+	if err := exec.Command("mkdir", "-p", ".devcontainer").Run(); err != nil {
+		panic(err)
+	}
 
-  devcontainerJSON := DevcontainerJSON{}
+	devcontainerJSON := DevcontainerJSON{}
 
-  noDockerfiles := true
-  if hasFile("Dockerfile") {
-    devcontainerJSON.Build.Dockerfile = "Dockerfile"
-  } else if hasFile("docker-compose.yml") {
-    devcontainerJSON.DockerComposeFile = "docker-compose.yml"
-  }
+	noDockerfiles := true
+	if hasFile("Dockerfile") {
+		devcontainerJSON.Build.Dockerfile = "Dockerfile"
+	} else if hasFile("docker-compose.yml") {
+		devcontainerJSON.DockerComposeFile = "docker-compose.yml"
+	}
 
-  if noDockerfiles {
-    fmt.Print("image? ")
-    scanner := bufio.NewScanner(os.Stdin)
-    scanner.Scan()
-    devcontainerJSON.Image = scanner.Text()
-  }
+	if noDockerfiles {
+		fmt.Print("image? ")
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		devcontainerJSON.Image = scanner.Text()
+	}
 
-  b, _ := json.Marshal(devcontainerJSON)
+	b, _ := json.Marshal(devcontainerJSON)
 
-  f, err := os.OpenFile(path.Join(".devcontainer", "devcontainer.json"), os.O_WRONLY|os.O_CREATE, 0666)
-  if err != nil {
-    panic(err)
-  }
-  f.Write(b)
+	f, err := os.OpenFile(path.Join(".devcontainer", "devcontainer.json"), os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+	f.Write(b)
 }
 
 type DevcontainerJSON struct {
-  Image string `json:"image,omitempty"`
-  Build struct {
-    Dockerfile string `json:"dockerfile,omitempty"`
-  } `json:"build,omitempty"`
-  DockerComposeFile string `json:"dockerComposeFile,omitempty"`
+	Image string `json:"image,omitempty"`
+	Build struct {
+		Dockerfile string `json:"dockerfile,omitempty"`
+	} `json:"build,omitempty"`
+	DockerComposeFile string `json:"dockerComposeFile,omitempty"`
 }
 
 func hasFile(filename string) bool {
-  if _, err := os.Stat(filename); os.IsNotExist(err) {
-    return false
-  }
-  return true
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
-

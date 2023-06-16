@@ -1,6 +1,5 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -14,9 +13,9 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version",
-	Long: "Print the version",
+	Long:  "Print the version",
 	Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("v0.1.0")
+		fmt.Println("v0.1.0")
 	},
 }
 
