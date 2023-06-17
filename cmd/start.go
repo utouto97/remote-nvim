@@ -59,9 +59,12 @@ func start(args []string) {
 		panic(err)
 	}
 
-	if err := installNvim(); err != nil {
-		panic(err)
-	}
+	/*
+	  TODO: wait for devcontainer to be ready
+	*/
+	/*
+	  TODO: install dotfiles
+	*/
 
 	address := fmt.Sprintf("0.0.0.0:%d", port)
 	if err := startRemoteNvim(address); err != nil {
@@ -94,7 +97,7 @@ func setupDevcontainer(port int) error {
 	}
 
 	if noDockerfiles {
-		fmt.Print("image? ")
+		fmt.Print("Image with tag? (example: golang:1.20) ")
 		scanner := bufio.NewScanner(os.Stdin)
 		scanner.Scan()
 		devcontainerJSON.Image = scanner.Text()
@@ -105,6 +108,7 @@ func setupDevcontainer(port int) error {
 		Target: "/var/lib/install-nvim.sh",
 		Type:   "bind",
 	})
+	devcontainerJSON.PostCreateCommand = append(devcontainerJSON.PostCreateCommand, "/var/lib/install-nvim.sh")
 	devcontainerJSON.AppPort = append(devcontainerJSON.AppPort, port)
 
 	b, _ := json.MarshalIndent(devcontainerJSON, "", "  ")
@@ -129,9 +133,10 @@ type DevcontainerJSON struct {
 	Build struct {
 		Dockerfile string `json:"dockerfile,omitempty"`
 	} `json:"build,omitempty"`
-	DockerComposeFile string  `json:"dockerComposeFile,omitempty"`
-	Mounts            []Mount `json:"mounts,omitempty"`
-	AppPort           []int   `json:"appPort,omitempty"`
+	DockerComposeFile string   `json:"dockerComposeFile,omitempty"`
+	Mounts            []Mount  `json:"mounts,omitempty"`
+	AppPort           []int    `json:"appPort,omitempty"`
+	PostCreateCommand []string `json:"postCreateCommand,omitempty"`
 }
 
 func hasFile(filename string) bool {
@@ -157,13 +162,6 @@ func devcontainerUp() error {
 func devcontainerExec(cmd string, args ...string) error {
 	as := append([]string{"exec", "--workspace-folder", ".", cmd}, args...)
 	if err := runCmd("devcontainer", as...); err != nil {
-		return err
-	}
-	return nil
-}
-
-func installNvim() error {
-	if err := devcontainerExec("/var/lib/install-nvim.sh"); err != nil {
 		return err
 	}
 	return nil
