@@ -5,12 +5,16 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -55,8 +59,25 @@ func start(args []string) {
 		panic(err)
 	}
 
-	if err := devcontainerUp(); err != nil {
+	// check if devcontainer is already running
+	cli, err := client.NewEnvClient()
+	if err != nil {
 		panic(err)
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	// check if devcontainer is already running
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(filters.KeyValuePair{Key: "label", Value: "devcontainer.local_folder=" + wd}),
+	})
+	if len(containers) == 0 {
+		if err := devcontainerUp(); err != nil {
+			panic(err)
+		}
 	}
 
 	/*
