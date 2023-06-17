@@ -43,12 +43,22 @@ func init() {
 }
 
 func start(args []string) {
+	if err := setupDevcontainer(); err != nil {
+		panic(err)
+	}
+
+	if err := devcontainerUp(); err != nil {
+		panic(err)
+	}
+}
+
+func setupDevcontainer() error {
 	if hasFile(path.Join(".devcontainer", "devcontainer.json")) {
-		return
+		return nil
 	}
 
 	if err := exec.Command("mkdir", "-p", ".devcontainer").Run(); err != nil {
-		panic(err)
+		return err
 	}
 
 	devcontainerJSON := DevcontainerJSON{}
@@ -73,9 +83,11 @@ func start(args []string) {
 
 	f, err := os.OpenFile(path.Join(".devcontainer", "devcontainer.json"), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	f.Write(b)
+
+	return nil
 }
 
 type DevcontainerJSON struct {
@@ -91,4 +103,21 @@ func hasFile(filename string) bool {
 		return false
 	}
 	return true
+}
+
+func hasCmd(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
+}
+
+func devcontainerUp() error {
+	if !hasCmd("devcontainer") {
+		return fmt.Errorf("devcontainer is not installed")
+	}
+
+	if err := exec.Command("devcontainer", "up", "--workspace-folder", ".").Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
