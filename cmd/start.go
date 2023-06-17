@@ -12,6 +12,7 @@ import (
 	"path"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // startCmd represents the start command
@@ -43,7 +44,14 @@ func init() {
 }
 
 func start(args []string) {
-	if err := setupDevcontainer(); err != nil {
+	port := viper.GetInt("port")
+	if port == 0 {
+		panic("port is not set")
+	} else if port > 65535 {
+		panic("port is out of range")
+	}
+
+	if err := setupDevcontainer(port); err != nil {
 		panic(err)
 	}
 
@@ -54,9 +62,13 @@ func start(args []string) {
 	if err := installNvim(); err != nil {
 		panic(err)
 	}
+
+	if err := startRemoteNvim(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
+		panic(err)
+	}
 }
 
-func setupDevcontainer() error {
+func setupDevcontainer(port int) error {
 	if hasFile(path.Join(".devcontainer", "devcontainer.json")) {
 		return nil
 	}
@@ -88,8 +100,9 @@ func setupDevcontainer() error {
 		Target: "/var/lib/install-nvim.sh",
 		Type:   "bind",
 	})
+	devcontainerJSON.AppPort = append(devcontainerJSON.AppPort, port)
 
-	b, _ := json.Marshal(devcontainerJSON)
+	b, _ := json.MarshalIndent(devcontainerJSON, "", "  ")
 
 	f, err := os.OpenFile(path.Join(".devcontainer", "devcontainer.json"), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -113,6 +126,7 @@ type DevcontainerJSON struct {
 	} `json:"build,omitempty"`
 	DockerComposeFile string  `json:"dockerComposeFile,omitempty"`
 	Mounts            []Mount `json:"mounts,omitempty"`
+	AppPort           []int   `json:"appPort,omitempty"`
 }
 
 func hasFile(filename string) bool {
@@ -128,10 +142,6 @@ func hasCmd(cmd string) bool {
 }
 
 func devcontainerUp() error {
-	if !hasCmd("devcontainer") {
-		return fmt.Errorf("devcontainer is not installed")
-	}
-
 	if err := runCmd("devcontainer", "up", "--workspace-folder", "."); err != nil {
 		return err
 	}
@@ -139,21 +149,16 @@ func devcontainerUp() error {
 	return nil
 }
 
-func devcontainerExec(cmds []string) error {
-	if !hasCmd("devcontainer") {
-		return fmt.Errorf("devcontainer is not installed")
-	}
-
-	args := append([]string{"exec", "--workspace-folder", "."}, cmds...)
-	if err := runCmd("devcontainer", args...); err != nil {
+func devcontainerExec(cmd string, args ...string) error {
+	as := append([]string{"exec", "--workspace-folder", ".", cmd}, args...)
+	if err := runCmd("devcontainer", as...); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func installNvim() error {
-	if err := devcontainerExec([]string{"/var/lib/install-nvim.sh"}); err != nil {
+	if err := devcontainerExec("/var/lib/install-nvim.sh"); err != nil {
 		return err
 	}
 	return nil
@@ -169,6 +174,17 @@ func runCmd(cmd string, args ...string) error {
 	c.Stderr = os.Stderr
 
 	if err := c.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func startRemoteNvim(address string) error {
+	if !hasCmd("nvim") {
+		return fmt.Errorf("nvim is not installed")
+	}
+
+	if err := exec.Command("devcontainer", "exec", "--workspace-folder", ".", "nvim", "--headless", "--listen", address).Start(); err != nil {
 		return err
 	}
 	return nil
