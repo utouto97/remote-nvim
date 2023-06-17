@@ -63,7 +63,12 @@ func start(args []string) {
 		panic(err)
 	}
 
-	if err := startRemoteNvim(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
+	address := fmt.Sprintf("0.0.0.0:%d", port)
+	if err := startRemoteNvim(address); err != nil {
+		panic(err)
+	}
+
+	if err := connectRemoteNvim(address); err != nil {
 		panic(err)
 	}
 }
@@ -180,11 +185,23 @@ func runCmd(cmd string, args ...string) error {
 }
 
 func startRemoteNvim(address string) error {
+	if err := exec.Command("devcontainer", "exec", "--workspace-folder", ".", "nvim", "--headless", "--listen", address).Start(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func connectRemoteNvim(address string) error {
 	if !hasCmd("nvim") {
 		return fmt.Errorf("nvim is not installed")
 	}
 
-	if err := exec.Command("devcontainer", "exec", "--workspace-folder", ".", "nvim", "--headless", "--listen", address).Start(); err != nil {
+	c := exec.Command("nvim", "--server", address, "--remote-ui")
+	c.Stdin = os.Stdin
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+
+	if err := c.Run(); err != nil {
 		return err
 	}
 	return nil
