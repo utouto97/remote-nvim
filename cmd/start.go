@@ -50,6 +50,10 @@ func start(args []string) {
 	if err := devcontainerUp(); err != nil {
 		panic(err)
 	}
+
+	if err := installNvim(); err != nil {
+		panic(err)
+	}
 }
 
 func setupDevcontainer() error {
@@ -57,7 +61,7 @@ func setupDevcontainer() error {
 		return nil
 	}
 
-	if err := exec.Command("mkdir", "-p", ".devcontainer").Run(); err != nil {
+	if err := runCmd("mkdir", "-p", ".devcontainer"); err != nil {
 		return err
 	}
 
@@ -79,6 +83,12 @@ func setupDevcontainer() error {
 		devcontainerJSON.Image = scanner.Text()
 	}
 
+	devcontainerJSON.Mounts = append(devcontainerJSON.Mounts, Mount{
+		Source: "./install-nvim.sh",
+		Target: "/var/lib/install-nvim.sh",
+		Type:   "bind",
+	})
+
 	b, _ := json.Marshal(devcontainerJSON)
 
 	f, err := os.OpenFile(path.Join(".devcontainer", "devcontainer.json"), os.O_WRONLY|os.O_CREATE, 0666)
@@ -90,12 +100,19 @@ func setupDevcontainer() error {
 	return nil
 }
 
+type Mount struct {
+	Source string `json:"source,omitempty"`
+	Target string `json:"target,omitempty"`
+	Type   string `json:"type,omitempty"`
+}
+
 type DevcontainerJSON struct {
 	Image string `json:"image,omitempty"`
 	Build struct {
 		Dockerfile string `json:"dockerfile,omitempty"`
 	} `json:"build,omitempty"`
-	DockerComposeFile string `json:"dockerComposeFile,omitempty"`
+	DockerComposeFile string  `json:"dockerComposeFile,omitempty"`
+	Mounts            []Mount `json:"mounts,omitempty"`
 }
 
 func hasFile(filename string) bool {
@@ -115,9 +132,44 @@ func devcontainerUp() error {
 		return fmt.Errorf("devcontainer is not installed")
 	}
 
-	if err := exec.Command("devcontainer", "up", "--workspace-folder", ".").Run(); err != nil {
+	if err := runCmd("devcontainer", "up", "--workspace-folder", "."); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func devcontainerExec(cmds []string) error {
+	if !hasCmd("devcontainer") {
+		return fmt.Errorf("devcontainer is not installed")
+	}
+
+	args := append([]string{"exec", "--workspace-folder", "."}, cmds...)
+	if err := runCmd("devcontainer", args...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installNvim() error {
+	if err := devcontainerExec([]string{"/var/lib/install-nvim.sh"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func runCmd(cmd string, args ...string) error {
+	if !hasCmd(cmd) {
+		return fmt.Errorf("%s is not installed", cmd)
+	}
+
+	c := exec.Command(cmd, args...)
+	c.Stdout = os.Stderr
+	c.Stderr = os.Stderr
+
+	if err := c.Run(); err != nil {
+		return err
+	}
 	return nil
 }
