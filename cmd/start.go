@@ -124,12 +124,9 @@ func setupDevcontainer(port int) error {
 		devcontainerJSON.Image = scanner.Text()
 	}
 
-	devcontainerJSON.Mounts = append(devcontainerJSON.Mounts, Mount{
-		Source: "./install-nvim.sh",
-		Target: "/var/lib/install-nvim.sh",
-		Type:   "bind",
-	})
-	devcontainerJSON.PostCreateCommand = append(devcontainerJSON.PostCreateCommand, "/var/lib/install-nvim.sh")
+	devcontainerJSON.PostCreateCommand = append(devcontainerJSON.PostCreateCommand,
+		"sh", "-c", "wget -O- https://raw.githubusercontent.com/utouto97/remote-nvim/main/install-nvim.sh | sh",
+	)
 	devcontainerJSON.AppPort = append(devcontainerJSON.AppPort, port)
 
 	b, _ := json.MarshalIndent(devcontainerJSON, "", "  ")
