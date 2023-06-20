@@ -1,5 +1,9 @@
 # Remote NVIM
 
+## Requirements
+
+- [devcontainer cli](https://github.com/devcontainers/cli)
+
 ## Usage
 
 ```bash
