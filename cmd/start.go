@@ -87,12 +87,11 @@ func start(args []string) {
 	  TODO: install dotfiles
 	*/
 
-	address := fmt.Sprintf("0.0.0.0:%d", port)
-	if err := startRemoteNvim(address); err != nil {
+	if err := startRemoteNvim(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
 		panic(err)
 	}
 
-	if err := connectRemoteNvim(address); err != nil {
+	if err := connectRemoteNvim(fmt.Sprintf("localhost:%d", port)); err != nil {
 		panic(err)
 	}
 }
