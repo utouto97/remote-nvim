@@ -126,6 +126,9 @@ func setupDevcontainer(port int) error {
 	devcontainerJSON.PostCreateCommand = append(devcontainerJSON.PostCreateCommand,
 		"sh", "-c", "wget -O- https://raw.githubusercontent.com/utouto97/remote-nvim/main/install-nvim.sh | sh",
 	)
+	devcontainerJSON.RunArgs = append(devcontainerJSON.RunArgs,
+		"-e", "SSH_AUTH_SOCK=/tmp/ssh-agent.socket", "-v", "${env:SSH_AUTH_SOCK}:/tmp/ssh-agent.socket",
+	)
 	devcontainerJSON.AppPort = append(devcontainerJSON.AppPort, port)
 
 	b, _ := json.MarshalIndent(devcontainerJSON, "", "  ")
@@ -154,6 +157,7 @@ type DevcontainerJSON struct {
 	Mounts            []Mount  `json:"mounts,omitempty"`
 	AppPort           []int    `json:"appPort,omitempty"`
 	PostCreateCommand []string `json:"postCreateCommand,omitempty"`
+	RunArgs           []string `json:"runArgs,omitempty"`
 }
 
 func hasFile(filename string) bool {
