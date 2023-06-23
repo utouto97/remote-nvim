@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -94,6 +95,8 @@ func start(args []string) {
 		if err := startRemoteNvim(port); err != nil {
 			panic(err)
 		}
+
+		time.Sleep(1 * time.Second)
 	}
 
 	/*
