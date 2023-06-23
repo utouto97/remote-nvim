@@ -75,7 +75,19 @@ func start(args []string) {
 		Filters: filters.NewArgs(filters.KeyValuePair{Key: "label", Value: "devcontainer.local_folder=" + wd}),
 	})
 	if len(containers) == 0 {
-		if err := devcontainerUp(); err != nil {
+
+		dotfilesOptions := []string{}
+		if dotfilesRepository := viper.GetString("dotfilesRepository"); dotfilesRepository != "" {
+			dotfilesOptions = append(dotfilesOptions, "--dotfiles-repository", dotfilesRepository)
+		}
+		if dotfilesTargetPath := viper.GetString("dotfilesTargetPath"); dotfilesTargetPath != "" {
+			dotfilesOptions = append(dotfilesOptions, "--dotfiles-target-path", dotfilesTargetPath)
+		}
+		if dotfilesInstallCommand := viper.GetString("dotfilesInstallCommand"); dotfilesInstallCommand != "" {
+			dotfilesOptions = append(dotfilesOptions, "--dotfiles-install-command", dotfilesInstallCommand)
+		}
+
+		if err := devcontainerUp(dotfilesOptions...); err != nil {
 			panic(err)
 		}
 	}
@@ -172,8 +184,10 @@ func hasCmd(cmd string) bool {
 	return err == nil
 }
 
-func devcontainerUp() error {
-	if err := runCmd("devcontainer", "up", "--workspace-folder", "."); err != nil {
+func devcontainerUp(opts ...string) error {
+	o := append([]string{}, "up", "--workspace-folder", ".")
+	o = append(o, opts...)
+	if err := runCmd("devcontainer", o...); err != nil {
 		return err
 	}
 
