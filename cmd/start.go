@@ -95,9 +95,6 @@ func start(args []string) {
 	/*
 	  TODO: wait for devcontainer to be ready
 	*/
-	/*
-	  TODO: install dotfiles
-	*/
 
 	if err := startRemoteNvim(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
 		panic(err)
