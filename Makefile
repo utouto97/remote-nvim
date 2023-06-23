@@ -1,5 +1,5 @@
-start:
-	go run main.go start
+run:
+	go run main.go
 
 build:
 	go build -o rnv
