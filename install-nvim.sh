@@ -7,6 +7,11 @@ if [ "$(uname)" = "Linux" ]; then
       apt install -y wget tar
     fi
   fi
+  if [ -z $(command -v git) ]; then
+    if [ -n "$(command -v apk)" ]; then
+      apk add git
+    fi
+  fi
 
   filename="nvim-linux64.tar.gz"
   version="stable"
