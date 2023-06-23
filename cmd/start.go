@@ -90,15 +90,15 @@ func start(args []string) {
 		if err := devcontainerUp(dotfilesOptions...); err != nil {
 			panic(err)
 		}
+
+		if err := startRemoteNvim(port); err != nil {
+			panic(err)
+		}
 	}
 
 	/*
 	  TODO: wait for devcontainer to be ready
 	*/
-
-	if err := startRemoteNvim(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
-		panic(err)
-	}
 
 	if err := connectRemoteNvim(fmt.Sprintf("localhost:%d", port)); err != nil {
 		panic(err)
@@ -214,8 +214,9 @@ func runCmd(cmd string, args ...string) error {
 	return nil
 }
 
-func startRemoteNvim(address string) error {
-	if err := exec.Command("devcontainer", "exec", "--workspace-folder", ".", "nvim", "--headless", "--listen", address).Start(); err != nil {
+func startRemoteNvim(port int) error {
+	if err := exec.Command("devcontainer", "exec", "--workspace-folder", ".", "sh", "-c",
+		fmt.Sprintf("wget -O- https://raw.githubusercontent.com/utouto97/remote-nvim/main/server.sh | sh -s %d", port)).Start(); err != nil {
 		return err
 	}
 	return nil
